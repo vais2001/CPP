@@ -1,0 +1,229 @@
+
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      crossorigin="anonymous"
+    />
+    <link 
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.9.0/css/all.min.css"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="{% static 'css/style.css' %}" />
+  </head>
+  <body>
+    
+    <div class="container-fluid">
+      <div class="row">
+        <div class="col-sm-12">
+            <div class="full_page_table mt-3">
+                <div class="table-responsive">
+                  <div style="float: right;">
+                    <!-- Button to trigger the modal -->
+                      <button type="file" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#uploadCsvModal">
+                        +Upload CSV
+                      </button>
+                  
+                      <!-- Modal for CSV upload -->
+                      <div class="modal fade" id="uploadCsvModal" tabindex="-1" aria-labelledby="uploadCsvModalLabel" aria-hidden="true">
+                        <div class="modal-dialog">
+                          <div class="modal-content">
+                            <div class="modal-header">
+                              <h5 class="modal-title" id="uploadCsvModalLabel">Upload CSV</h5>
+                              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                            <form id="csvUploadForm" enctype="multipart/form-data" method = "post" action = "{%url 'csv_upload'%}">
+                                 {% csrf_token %} 
+                                 <input type="file" name="csvFile">
+                                 <input type="hidden" id="case_upload_name" class="form-control form-control-modern" name="table_name" value="{{table_name}}" required/>
+                              </div>
+                              <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                <button type="submit" class="btn btn-primary" id="uploadCsvButton">Upload</button>
+                              </form>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <table class="table table-bordered text-center">
+                    <thead>
+                      <tr>
+                          {% for column in colmn_names %}
+                          <h5><th scope="col">{{column}}</th></h5>
+                          {% endfor %}
+                          <h5><th scope="col">Action</th></h5>
+                      </tr>
+                    </thead>
+                    <tbody>
+
+                      {% for dataDict in data %}
+                      <tr>
+                          {% for value in dataDict.values%}
+                          <td>{{value}}</td>
+                          {% endfor %}
+
+                          <td> 
+                               
+                              <button class="border-0 bg-transparent" data-placement="top" data-bs-toggle="modal"
+                              onclick="Set_data('{{ dataDict}}','{{table_name}}')" data-bs-target="#update">
+                                  <i class="fa fa-edit"></i>
+                              </button>
+                              <button class="border-0 bg-transparent" data-bs-placement="top" data-bs-toggle="modal"
+                              onclick="Set_deletion_id_table_name('{{dataDict.id}}', '{{table_name}}')" data-bs-target="#deletion">
+                                  <i class="fa fa-trash"></i>
+                            </button>
+                          </td>
+                          </tr>
+                          {% endfor %}
+                    </tbody>
+                  </table>
+                  </div>
+            </div>
+        </div>
+      </div>
+    </div>
+    <script>
+      function Set_data(object,table_name)
+      {
+        let i=0
+        console.log(object)
+        while (i < object.length) {
+          document.getElementById(i).value = object[i];
+          i++;
+        }
+        document.getElementById("update_table_name").value = table_name;
+      }
+      function Set_deletion_id_table_name(id,table_name){
+        document.getElementById('case_deletion_id').value=id;
+        document.getElementById('case_deletion_table_name').value=table_name;
+      }
+    </script>
+    
+
+    <div class="modal fade" id="update" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+      <div class="modal-dialog modal-lg" role="document">
+        <form class="action-buttons-fixed mb-0" id="add_account" method="post" action="{%url 'Update_entry'%}">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-bs-dismiss="modal" aria-hidden="true">&times;</button>
+            <h4 class="modal-title" id="myModalLabel">UPDATION</h4>
+          </div>
+          <div class="modal-body">
+                {% csrf_token %}
+              Enter your data here.
+              <br>
+              {% for column in colmn_names %}
+              <label for="fname">{{forloop.counter0}}{{column}}:</label>
+              {% if column == "id" %}
+              <input id="{{ forloop.counter0 }}" class="form-control form-control-modern" name="{{forloop.counter0}}{{column}}" readonly required/>
+              {% else %}
+              <input id="{{ forloop.counter0 }}" class="form-control form-control-modern" name="{{forloop.counter0}}{{column}}" required/>
+              {% endif %}
+              {% endfor %}  
+              <input type="hidden" id="update_table_name" class="form-control form-control-modern" name="table_name" required/>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-default" data-bs-dismiss="modal">Cancle</button>
+              <button type="submit" class="btn btn-primary">Update</button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  
+    <div class="modal fade" id="deletion" role="dialog" aria-labelledby="deletionLabel" aria-hidden="true">
+      <div class="modal-dialog" role="document">
+        <form class="action-buttons-fixed mb-0" id="add_account" method="post" action="{%url 'delete_case'%}">
+          {% csrf_token %}
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">Delete</h5>
+              <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+              </button>
+            </div>
+            <div class="modal-body">
+              Are you sure you want to delete.
+              <input type="hidden" id="case_deletion_id" class="form-control form-control-modern" name="case_id" required/>
+              <input type="hidden" id="case_deletion_table_name" class="form-control form-control-modern" name="table_name" required/>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">No</button>
+              <button type="submit" class="btn btn-primary">Yes</button>
+            </div>
+          </div>
+        </form>
+       
+      </div>
+    </div>
+
+    <div class="modal fade" id="case_task_detail" role="dialog" aria-labelledby="casetaskdetailLabel"
+    aria-hidden="true">
+    <div class="modal-dialog" role="document">
+          <form class="action-buttons-fixed mb-0" method="post" action="/edit_table_detail/">
+                {% csrf_token %}
+                <div class="modal-content">
+                      <div class="modal-header">
+                            <h5 class="modal-title">Update data</h5>
+                            <button type="button" class="close" data-bs-dismiss="modal"
+                                  aria-label="Close">
+                                  <span aria-hidden="true">&times;</span>
+                            </button>
+                      </div>
+                      <div class="modal-body">
+                            <div class="form-group align-items-center py-0" id="popup_data_body">
+                                  <!-- <div id="">
+    
+                                  </div> -->
+                                  <!-- {% for k,v in function_config.items %}
+                                  <label>{{ k }}</label>
+                                  <input type="{{ v }}" class="form-control form-control-modern"
+                                        name="{{ k }}" value="" />
+                                  {% endfor %}
+                                  -->
+                                  <!-- <input type="hidden" class="form-control form-control-modern"
+                                        name="function_id" required value="{{ function_id }}" />
+                                  <input type="hidden" class="form-control form-control-modern"
+                                        name="case_id" required value="{{ case_id }}" />
+                                  <input type="hidden" class="form-control form-control-modern"
+                                        name="task_id" required value="{{ task_id }}" />  -->
+                            </div>
+                      </div>
+                      <div class="modal-footer" id="popup_data_footer">                                          
+                      </div>
+                </div>
+          </form>
+    
+    </div>
+    </div>
+
+
+
+
+
+
+
+
+    <script
+      src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
+      crossorigin="anonymous"
+    ></script>
+    <script
+      src="https://code.jquery.com/jquery-3.7.0.min.js"
+      crossorigin="anonymous"
+    ></script>
+
+<Script src="{% static 'js/custom.js' %}"></Script>
+<Script src="{% static 'js/custom1.js' %}"></Script>
+  </body>
+</html>
